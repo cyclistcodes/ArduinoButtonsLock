@@ -4,9 +4,14 @@ int greenLEDPin = 12;            // Green LED pin
 int redLEDPin = 11;              // Red LED pin
 
 // Correct combination to unlock
-int correctCombination[] = {1, 2, 1, 1};
+int correctCombination[] = {2, 2, 4, 4};
 int enteredCombination[4] = {0, 0, 0, 0};
 int currentIndex = 0;
+
+
+// Button press states
+bool buttonPressed[] = {false, false, false, false};
+
 
 void setup() {
   Serial.begin(9600);
@@ -26,22 +31,40 @@ void setup() {
 }
 
 void loop() {
-  // Check button presses
   for (int i = 0; i < 4; i++) {
-    if (digitalRead(buttonPins[i]) == LOW) {
+    bool currentState = digitalRead(buttonPins[i]) == LOW;
+
+   
+    if (currentState != buttonPressed[i]) {
+      delay(5);  // Debounce delay
+      currentState = digitalRead(buttonPins[i]) == LOW;
+    }
+
+    if (currentState && !buttonPressed[i]) {
       handleButtonPress(i + 1);
-      delay(250); // Debounce delay
+      buttonPressed[i] = true;
+    } else if (!currentState) {
+      buttonPressed[i] = false;
     }
   }
 }
 
 void handleButtonPress(int button) {
   // Shift entered combination and add new button press
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i <= 3; i++) {
     enteredCombination[i] = enteredCombination[i + 1];
   }
+  
   enteredCombination[3] = button;
-
+  
+  
+  Serial.print("Combination ");
+  Serial.print(enteredCombination[0]);
+  Serial.print(enteredCombination[1]);
+  Serial.print(enteredCombination[2]);
+  Serial.println(enteredCombination[3]);
+  
+  
   // Check if the entered combination is correct
   if (checkCombination()) {
     unlockDoor();
@@ -72,4 +95,3 @@ void unlockDoor() {
     enteredCombination[i] = 0;
   }
 }
-
